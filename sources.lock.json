@@ -1,0 +1,26 @@
+{
+  "Trellis-Windows": {
+    "url": "https://github.com/visualbruno/ComfyUI-Trellis2.git",
+    "revision": "b0e84c0f29857a444e8bcb5b9be2ea218e96efd0"
+  },
+  "WTiVo": {
+    "url": "https://github.com/Mstafa-awad/WTiVo-WatertightVoxel-ComfyuiNode.git",
+    "revision": "fb9e9ea6a7deec965d3a4bf43ba7a4a9ff3856f3"
+  },
+  "Quad": {
+    "url": "https://github.com/Mstafa-awad/ComfyUI-Mesh-Quad-Reconstruct.git",
+    "revision": "74048b3415537e26cc72b46b082a010cd0e357ce"
+  },
+  "LODTailor": {
+    "url": "https://github.com/Mstafa-awad/LODTailor-The-Mesh-Trimmer-ComfyuiNode.git",
+    "revision": "3d25b7d4aa382fa5dac210eb5d8d0eadc4a4f183"
+  },
+  "FastMerge": {
+    "url": "https://github.com/Mstafa-awad/WTiVo-FastMergeByDistance.git",
+    "revision": "5392949165ceed1e74448b1949d6e0dc9b34dd92"
+  },
+  "BakeForger": {
+    "url": "https://github.com/Mstafa-awad/LODTailor-Bake-Forger.git",
+    "revision": "f13589c22558e3ca49dfa87dce709233eb3cc86b"
+  }
+}

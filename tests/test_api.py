@@ -42,6 +42,26 @@ class ApiTests(unittest.TestCase):
             self.assertEqual(response.status_code,422)
         self.assertIsNone(app.active_id)
 
+    def test_rejects_large_resolution_before_starting_worker(self):
+        with patch('resource_guard.gpu_info',return_value={'total_gib':11.94}):
+            response=self.client.post('/api/jobs',data={'resolution':2048},files={'file':('test.png',b'bad','image/png')})
+        self.assertEqual(response.status_code,422)
+        self.assertIn('memory limit',response.json()['detail'])
+        self.assertIsNone(app.active_id)
+
+    def test_pixal_requires_downloads(self):
+        response=self.client.post('/api/jobs',data={'engine':'pixal3d'},files={'file':('test.png',b'bad','image/png')})
+        self.assertEqual(response.status_code,422)
+        self.assertIn('INSTALL_PIXAL3D.bat',response.json()['detail'])
+        self.assertIsNone(app.active_id)
+
+    def test_invalid_engine(self):
+        response=self.client.post('/api/jobs',data={'engine':'unknown'},files={'file':('test.png',b'bad','image/png')})
+        self.assertEqual(response.status_code,422)
+
+    def test_recovery_cannot_escape_outputs(self):
+        with self.assertRaises(app.HTTPException): app.resume_run('..')
+
     def test_worker_success_releases_slot_and_saves_status(self):
         import sys,time
         job={'id':'demo','name':'Test','state':'running','started':time.time(),'message':'Working'}

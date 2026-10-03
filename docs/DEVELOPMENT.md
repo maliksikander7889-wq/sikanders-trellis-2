@@ -8,6 +8,8 @@
 | web/index.html / style.css / app.js | Custom HTML studio, visual design and browser controls |
 | library.py | Safe discovery, version selection and topology summaries |
 | mesh_runner.py | Generation, repair, texture export and baking workers |
+| pixal_native.py | MoGe camera estimate, Pixal3D shape and TRELLIS.2 material sampling |
+| resource_guard.py | Hardware preflight, GPU allocation budget and worker memory watchdog |
 | native_models.py | Memory-efficient checkpoint loading |
 | native_runtime.py | Local paths, memory preflight and progress adapter |
 | prepare_runtime.py | Builds native adapters from pinned upstream sources |
@@ -21,6 +23,20 @@
 Image → background removal → native geometry and texture sampling → saved
 latent checkpoint → decode → Quad → WTiVo → Blender reduction → safe vertex
 merge → topology audit → texture projection → simplification → map baking.
+
+The Pixal3D option replaces shape sampling and adds a separate TRELLIS.2
+material worker. The material worker uses the saved shape latent directly;
+it does not re-encode, regenerate or refine geometry. The pinned checkpoints
+have identical shape-decoder weights and matching shape normalization.
+MoGe estimates camera field of view; NAF supplies projected image features.
+
+Each expensive stage runs in a fresh process. Atomic latent checkpoints and
+`stages.json` allow resume with original settings after a worker failure.
+The parent watches available RAM and Windows commit memory and stops its
+own child process tree if memory becomes critically low. PyTorch workers
+also reserve GPU headroom through an allocation budget. External CUDA
+libraries may allocate outside PyTorch; these measures cannot guarantee
+against every out-of-memory condition or driver crash.
 
 Texture lookups project onto the original decoded surface, preventing empty
 voxel sampling when the repaired surface shifts. If distance merging breaks

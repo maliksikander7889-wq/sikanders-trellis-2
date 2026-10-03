@@ -13,6 +13,7 @@ def main():
     constants.DOWNLOAD_CHUNK_SIZE = 1024 * 1024
     parser = argparse.ArgumentParser()
     parser.add_argument("--textures", action="store_true")
+    parser.add_argument("--pixal3d", action="store_true", help="Also download Pixal3D shape models and camera estimation weights")
     args = parser.parse_args()
     lock_path = ROOT / "model-revisions.json"
     lock = json.loads(lock_path.read_text()) if lock_path.exists() else {}
@@ -58,6 +59,22 @@ def main():
     snapshot_download(bg_repo, revision=revision(bg_repo),
         allow_patterns=["*.json", "*.safetensors", "*.py", "LICENSE*", "README.md"],
         local_dir=ROOT / "models" / bg_repo, max_workers=1)
+    if args.pixal3d:
+        repo = "TencentARC/Pixal3D"
+        config = json.loads(Path(file(repo, "pipeline.json")).read_text())
+        for key, name in config["args"]["models"].items():
+            if key.startswith("tex_"):
+                continue
+            for ext in ("json", "safetensors"):
+                file(repo, f"{name}.{ext}")
+        file("Ruicheng/moge-2-vitl", "model.pt")
+        # Download NAF's pinned code and weights before a generation starts.
+        import torch
+        naf_dir = ROOT / "sources/NAF"
+        if not (naf_dir / "hubconf.py").exists():
+            raise RuntimeError("Pixal3D runtime missing. Run INSTALL.bat to update setup first.")
+        torch.hub.load(str(naf_dir), "naf", pretrained=True, device="cpu", source="local")
+        (ROOT / "models/pixal3d-ready.json").write_text(json.dumps({"revisions": lock}, indent=2))
     print("Native model downloads finished.")
 
 

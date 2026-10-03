@@ -22,9 +22,9 @@ try {
     if (-not $gpu) { throw 'Install a current NVIDIA graphics driver, restart Windows, and rerun INSTALL.bat.' }
     & nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
     if ($LASTEXITCODE -ne 0) { throw 'The NVIDIA driver is not responding.' }
-    Write-Host 'First install needs about 35 GB of free space and a large model download. 32 GB RAM and 12 GB VRAM are recommended for 1024.'
+    Write-Host 'First install needs at least 60 GB of free space for both engines and a large model download. 32 GB RAM and 12 GB VRAM are recommended for 1024.'
     $drive = [System.IO.DriveInfo]::new([System.IO.Path]::GetPathRoot($projectRoot))
-    if ($drive.AvailableFreeSpace -lt 35GB -and -not (Test-Path '.venv\Scripts\python.exe')) { throw 'Free at least 35 GB on this drive before installation.' }
+    if ($drive.AvailableFreeSpace -lt 60GB -and -not (Test-Path '.venv\Scripts\python.exe')) { throw 'Free at least 60 GB on this drive before installation.' }
     if ($CheckOnly) {
         Write-Host 'Preflight passed. No software or models were downloaded.'
         return
@@ -49,7 +49,7 @@ try {
     $env:PYTHONUTF8 = '1'
     & $pythonPath setup.py
     if ($LASTEXITCODE -ne 0) { throw 'Environment setup failed. See the error above.' }
-    & '.\.venv\Scripts\python.exe' download_models.py --textures
+    & '.\.venv\Scripts\python.exe' download_models.py --textures --pixal3d
     if ($LASTEXITCODE -ne 0) { throw 'Model download failed. Rerun INSTALL.bat to resume.' }
     Write-Host "`nReady. Opening Sikander's Trellis 2." -ForegroundColor Green
 } catch {

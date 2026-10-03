@@ -22,5 +22,9 @@
   "BakeForger": {
     "url": "https://github.com/Mstafa-awad/LODTailor-Bake-Forger.git",
     "revision": "f13589c22558e3ca49dfa87dce709233eb3cc86b"
+  },
+  "NAF": {
+    "url": "https://github.com/valeoai/NAF.git",
+    "revision": "37f2dfc180f2de53d98bd601109c0da0dd6b0f43"
   }
 }

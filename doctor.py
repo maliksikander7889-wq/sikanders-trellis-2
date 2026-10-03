@@ -20,9 +20,16 @@ def main():
     report = {"torch": torch.__version__, "gpu": torch.cuda.get_device_name(0),
               "vram_gib": torch.cuda.get_device_properties(0).total_memory / 2**30,
               "blender": blender_path()}
-    for name in ("cumesh", "flex_gemm", "nvdiffrast.torch", "o_voxel", "triton", "trellis2.pipelines.trellis2_image_to_3d", "quad_native"):
+    for name in ("cumesh", "flex_gemm", "nvdiffrast.torch", "o_voxel", "triton", "natten", "moge.model.v2", "trellis2.pipelines.trellis2_image_to_3d", "quad_native"):
         importlib.import_module(name)
         print(f"OK: {name}", flush=True)
+    naf = torch.hub.load(str(ROOT / "sources/NAF"), "naf", pretrained=False, source="local").cuda().eval()
+    with torch.inference_mode():
+        features = naf(torch.rand(1,3,64,64,device="cuda"), torch.rand(1,64,16,16,device="cuda"), (64,64))
+        assert features.shape == (1,64,64,64) and torch.isfinite(features).all(), "NAF CUDA kernel check failed"
+    del features, naf
+    torch.cuda.empty_cache()
+    report["naf_neighborhood_attention"] = "passed"
     import cumesh
     sphere = trimesh.creation.icosphere(subdivisions=2)
     cuda_mesh = cumesh.CuMesh()

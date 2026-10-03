@@ -1,5 +1,19 @@
 # Usage
 
+## Pixal3D and saved stages
+
+Run `INSTALL_PIXAL3D.bat` once. In the studio select **Pixal3D shape +
+TRELLIS.2 textures**. With texturing disabled, only Pixal3D geometry is produced.
+The command line accepts `--engine pixal3d` with 1024 or 1536 resolution.
+
+To resume an interrupted image job, use the library's Resume button, or run
+the same image command with its original `--output` folder and `--resume`.
+Resume uses the original saved settings. `shape_latents.npz` preserves the
+Pixal3D geometry before TRELLIS.2 materials; `generated_latents.npz` preserves
+the final sampling result before mesh decoding. `stages.json` records which
+stages completed. Keep these files for recovery. Runs above the GPU memory
+limit cannot resume on that GPU, including older experimental 2048 runs.
+
 ## Studio
 
 Choose Image to 3D, upload an image, and name the result. Shape resolution
@@ -43,7 +57,8 @@ Run these from the application folder in PowerShell:
 
 Texture export requires `texture_volume.npz` from a run with texture generation
 enabled. A geometry-only checkpoint cannot supply missing texture features.
-CLI defaults differ from the UI; specify resolution and face target explicitly.
+CLI resolution and face defaults match the studio. Add `--texture` to enable
+materials when using the command line.
 
 Advanced flags: `--seed`, `--lowpoly-faces`, `--max-tokens`, `--proxy-points`,
 `--no-quad`, and `--blender-voxel`. The extra Blender voxel pass consumes

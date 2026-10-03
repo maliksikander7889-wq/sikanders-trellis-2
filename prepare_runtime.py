@@ -28,6 +28,18 @@ def main():
         text = replace_checked(text, f"self.models['{name}'].to(self._device)",
                               f"self.models['{name}'].to('cpu' if self.low_vram else self._device)")
     path.write_text(text, encoding="utf-8")
+    shutil.copytree(ROOT / "sources/Trellis-Windows/moge", ROOT / "runtime/moge",
+                    dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__"))
+    path = dest / "trainers/flow_matching/mixins/image_conditioned_proj.py"
+    text = path.read_text(encoding="utf-8")
+    start = text.index("    def _cached_naf_repo(")
+    end = text.index("    def _load_naf(", start)
+    text = text[:start] + '''    def _cached_naf_repo(self):
+        from native_runtime import ROOT
+        return str(ROOT / "sources/NAF")
+
+''' + text[end:]
+    path.write_text(text, encoding="utf-8")
     path = dest / "models" / "sparse_structure_flow.py"
     text = path.read_text(encoding="utf-8")
     text = replace_checked(text, "torch.arange(res, device=self.device)", "torch.arange(res, device='cpu')")

@@ -5,6 +5,10 @@ models and tools. Their authors retain ownership and their licenses apply.
 
 | Component | Use / source |
 |---|---|
+| Tencent Pixal3D | [Pixel-aligned shape generation](https://github.com/TencentARC/Pixal3D); retain upstream code and model licenses |
+| MoGe 2 | [Camera estimation](https://github.com/microsoft/MoGe), weights from Ruicheng/moge-2-vitl; retain upstream licenses |
+| NAF | [Feature upsampling](https://github.com/valeoai/NAF), Apache-2.0 |
+| NATTEN / utils3d | Neighborhood attention and camera geometry; see installed packages and their licenses |
 | Microsoft TRELLIS.2 | [Image-to-3D model](https://github.com/microsoft/TRELLIS.2), MIT |
 | VisualBruno Windows port | [Native pipeline code and CUDA wheels](https://github.com/visualbruno/ComfyUI-Trellis2), see upstream licenses |
 | WTiVo | [Watertight voxel processing](https://github.com/Mstafa-awad/WTiVo-WatertightVoxel-ComfyuiNode), GPL-3.0 and bundled component notices |

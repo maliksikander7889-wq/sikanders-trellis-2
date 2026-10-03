@@ -8,6 +8,22 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from native_runtime import ROOT, ProgressBar, blender_path, configure, require_memory
+from resource_guard import configure_gpu, run_worker, validate_hardware
+
+
+def save_latents(path, shape, texture, resolution):
+    import numpy as np
+    import os
+    data = {"shape_feats": shape.feats.float().cpu().numpy(),
+            "shape_coords": shape.coords.cpu().numpy(), "resolution": resolution}
+    if texture is not None:
+        data.update(texture_feats=texture.feats.float().cpu().numpy(), texture_coords=texture.coords.cpu().numpy())
+    temporary = Path(path).with_suffix(".tmp")
+    with temporary.open("wb") as stream:
+        np.savez(stream, **data)
+        stream.flush()
+        os.fsync(stream.fileno())
+    temporary.replace(path)
 
 
 def load_module(name, path):
@@ -71,22 +87,27 @@ def generate(args):
     import trimesh
     from trellis2.pipelines import Trellis2ImageTo3DPipeline
     output = Path(args.output)
-    model_dir = ROOT / "models/microsoft/TRELLIS.2-4B"
+    pixal = args.engine == "pixal3d"
+    if pixal and not (ROOT / "models/pixal3d-ready.json").is_file():
+        raise RuntimeError("Pixal3D setup is incomplete. Run INSTALL_PIXAL3D.bat first.")
+    model_dir = ROOT / ("models/TencentARC/Pixal3D" if pixal else "models/microsoft/TRELLIS.2-4B")
     if not (model_dir / "pipeline.json").exists():
         raise RuntimeError("Native checkpoints missing. Run 02_DOWNLOAD_MODELS.bat.")
-    pipeline = Trellis2ImageTo3DPipeline.from_pretrained(str(model_dir), keep_models_loaded=False)
+    pipeline = Trellis2ImageTo3DPipeline.from_pretrained(str(model_dir), keep_models_loaded=False, isPixal3D=pixal)
     pipeline.low_vram = True
     pipeline.cuda()
-    decode = pipeline.decode_latent
     def checkpoint_decode(shape, texture, resolution, use_tiled=True):
-        data = {"shape_feats": shape.feats.float().cpu().numpy(),
-                "shape_coords": shape.coords.cpu().numpy(), "resolution": resolution}
-        if texture is not None:
-            data.update(texture_feats=texture.feats.float().cpu().numpy(), texture_coords=texture.coords.cpu().numpy())
-        np.savez(output / "generated_latents.npz", **data)
-        return decode(shape, texture, resolution, use_tiled=use_tiled)
+        save_latents(output / ("shape_latents.npz" if pixal else "generated_latents.npz"), shape, texture, resolution)
+        # Decode in a fresh process so denoisers, attention caches and allocator
+        # reservations cannot occupy GPU memory during the largest mesh allocation.
+        return []
     pipeline.decode_latent = checkpoint_decode
     image = preprocess(args.input, output)
+    if pixal:
+        from pixal_native import generate_shape
+        generate_shape(args, image, pipeline, checkpoint_decode)
+        print("Pixal3D shape saved. Releasing GPU memory before materials.", flush=True)
+        return
     common = {"guidance_strength": 7.5, "guidance_interval": [0.6, 1.0], "rescale_t": 3.0}
     if args.resolution in (512, 2048):
         result = pipeline.run(image, seed=args.seed, pipeline_type="512" if args.resolution == 512 else "2048_cascade",
@@ -104,8 +125,7 @@ def generate(args):
             high_res_shape_slat_sampler_params={**common, "steps": 20, "guidance_rescale": 0.5},
             tex_slat_sampler_params={"steps": 12, "guidance_strength": 1.0},
             fill_holes=False, keep_only_shell=False, pbar=ProgressBar(5), verbose=True)
-    save_generated(result[0], output, args.texture)
-    print("Generation complete. Raw geometry saved.", flush=True)
+    print("Sampling complete. Saved checkpoint; releasing GPU memory before decoding.", flush=True)
 
 
 def save_generated(mesh, output, with_texture):
@@ -136,6 +156,17 @@ def decode_saved(args):
         if "texture_feats" in data:
             texture = SparseTensor(torch.from_numpy(data["texture_feats"]).cuda(), torch.from_numpy(data["texture_coords"]).cuda())
         resolution = int(data["resolution"])
+    validate_hardware(resolution)
+    # Preserve usable geometry even if material decoding later runs out of memory.
+    decode_shape = pipeline.decode_shape_slat
+    def save_shape(*values, **kwargs):
+        import trimesh
+        meshes, subs = decode_shape(*values, **kwargs)
+        m = meshes[0]
+        trimesh.Trimesh(m.vertices.cpu().numpy(), m.faces.cpu().numpy(), process=False).export(Path(args.output) / "raw.ply")
+        print("Raw geometry checkpoint saved.", flush=True)
+        return meshes, subs
+    pipeline.decode_shape_slat = save_shape
     mesh = pipeline.decode_latent(shape, texture, resolution, use_tiled=True)[0]
     save_generated(mesh, Path(args.output), texture is not None)
 
@@ -277,20 +308,30 @@ def bake(args):
 def main():
     configure()
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("command", choices=["generate", "decode", "repair", "texture", "bake", "image"])
+    p.add_argument("command", choices=["generate", "materials", "decode", "repair", "texture", "bake", "image"])
+    p.add_argument("--engine", choices=["trellis2", "pixal3d"], default="trellis2")
     p.add_argument("input", help="Image or triangle mesh path")
     p.add_argument("--output")
-    p.add_argument("--resolution", type=int, choices=[512,1024,1536,2048], default=1536)
+    p.add_argument("--resolution", type=int, choices=[512,1024,1536,2048], default=1024)
     p.add_argument("--seed", type=int, default=56)
-    p.add_argument("--faces", type=int, default=6_000_000)
+    p.add_argument("--faces", type=int, default=300_000)
     p.add_argument("--lowpoly-faces", type=int, default=30_000)
     p.add_argument("--max-tokens", type=int, default=49152)
     p.add_argument("--proxy-points", type=int, default=0)
     p.add_argument("--quad", action=argparse.BooleanOptionalAction, default=True)
     p.add_argument("--blender-voxel", action="store_true", help="Repeat voxel remeshing in Blender, as in the original workflow; needs more RAM")
     p.add_argument("--texture", action="store_true")
-    p.add_argument("--texture-size", type=int, choices=[1024,2048,4096], default=4096)
+    p.add_argument("--texture-size", type=int, choices=[1024,2048,4096], default=2048)
+    p.add_argument("--resume", action="store_true", help="Continue saved stages in an existing output folder with its original settings")
     args = p.parse_args()
+    if args.resume:
+        if args.command != "image" or not args.output:
+            p.error("Resume requires image mode and --output pointing to the original run.")
+        saved = json.loads((Path(args.output) / "run-settings.json").read_text())
+        local_source = Path(args.output) / "source.png"
+        args.input = str(local_source) if local_source.is_file() else saved["input"]
+        for key in ("resolution", "engine", "seed", "faces", "lowpoly_faces", "max_tokens", "proxy_points", "texture_size", "texture", "quad", "blender_voxel"):
+            if key in saved: setattr(args, key, saved[key])
     args.input = str(Path(args.input).resolve())
     if not Path(args.input).is_file():
         p.error(f"Input file not found: {args.input}")
@@ -300,10 +341,17 @@ def main():
         args.output = str(ROOT / "outputs" / (Path(args.input).stem + "_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f")))
     args.output = str(Path(args.output).resolve())
     Path(args.output).mkdir(parents=True, exist_ok=True)
+    validate_hardware(args.resolution, args.engine if args.command != "repair" else "trellis2")
     if args.command != "image":
-        return {"generate": generate, "decode": decode_saved, "repair": repair, "texture": texture, "bake": bake}[args.command](args)
-    (Path(args.output) / "run-settings.json").write_text(json.dumps(vars(args), indent=2))
-    common = ["--output", args.output, "--resolution", str(args.resolution), "--seed", str(args.seed),
+        configure_gpu()
+        from pixal_native import trellis_materials
+        return {"generate": generate, "materials": trellis_materials, "decode": decode_saved, "repair": repair, "texture": texture, "bake": bake}[args.command](args)
+    settings_path = Path(args.output) / "run-settings.json"
+    if not args.resume and settings_path.exists():
+        p.error("This output folder already contains a run. Use --resume or choose a new folder.")
+    if not args.resume:
+        settings_path.write_text(json.dumps(vars(args), indent=2))
+    common = ["--output", args.output, "--engine", args.engine, "--resolution", str(args.resolution), "--seed", str(args.seed),
               "--faces", str(args.faces), "--lowpoly-faces", str(args.lowpoly_faces),
               "--max-tokens", str(args.max_tokens), "--proxy-points", str(args.proxy_points),
               "--texture-size", str(args.texture_size), "--quad" if args.quad else "--no-quad"]
@@ -312,12 +360,49 @@ def main():
     if args.blender_voxel:
         common += ["--blender-voxel"]
     # Separate processes release CUDA memory fully between generation and repair.
-    steps = [("generate", args.input), ("repair", str(Path(args.output) / "raw.ply"))]
+    output = Path(args.output)
+    latent = output / ("shape_latents.npz" if args.engine == "pixal3d" and not args.texture else "generated_latents.npz")
+    steps = [("generate", args.input)]
+    if args.engine == "pixal3d" and args.texture:
+        steps.append(("materials", str(output / "shape_latents.npz")))
+    steps.extend([("decode", str(latent)), ("repair", str(output / "raw.ply"))])
     if args.texture:
         steps.append(("texture", str(Path(args.output) / "final.ply")))
         steps.append(("bake", str(Path(args.output) / "final.ply")))
+    state_path = output / "stages.json"
+    def save_stage_state(done):
+        import os
+        temporary = state_path.with_suffix(".tmp")
+        with temporary.open("w", encoding="utf-8") as stream:
+            json.dump(done, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(state_path)
+    done = json.loads(state_path.read_text()) if args.resume and state_path.exists() else []
+    expected = {
+        "generate": ["shape_latents.npz" if args.engine == "pixal3d" else "generated_latents.npz"],
+        "materials": ["generated_latents.npz"],
+        "decode": ["raw.ply", "generation-metadata.json"] + (["texture_volume.npz"] if args.texture else []),
+        "repair": ["final.ply", "final.glb", "mesh-audit.json"],
+        "texture": ["textured.glb", "lowpoly.glb", "texture-audit.json"],
+        "bake": ["game_ready.glb", "game-ready-audit.json"],
+    }
+    # Older runs already saved sampling checkpoints before the decoder failed.
+    if args.resume and "generate" not in done and all((output/name).is_file() for name in expected["generate"]):
+        done.append("generate")
     for stage, source in steps:
-        subprocess.run([sys.executable, "-u", str(Path(__file__)), stage, source, *common], check=True)
+        if args.resume and stage in done and all((output/name).is_file() for name in expected[stage]):
+            print(f"Resume: keeping completed {stage} stage.", flush=True)
+            continue
+        print(f"Starting stage: {stage}", flush=True)
+        downstream = {name for name, _ in steps[steps.index((stage, source)): ]}
+        done = [name for name in done if name not in downstream]
+        save_stage_state(done)
+        run_worker([sys.executable, "-u", str(Path(__file__)), stage, source, *common])
+        if not all((output/name).is_file() for name in expected[stage]):
+            raise RuntimeError(f"{stage} did not save all required outputs.")
+        if stage not in done: done.append(stage)
+        save_stage_state(done)
     print(f"Finished. Output folder: {args.output}", flush=True)
 
 

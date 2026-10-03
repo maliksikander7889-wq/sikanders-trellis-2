@@ -3,7 +3,7 @@ scipy==1.16.2
 trimesh==4.10.1
 transformers==4.57.3
 huggingface-hub==0.36.0
-safetensors==0.6.2
+safetensors==0.7.0
 accelerate==1.13.0
 einops==0.8.1
 easydict==1.13
@@ -25,3 +25,5 @@ uvicorn==0.54.0
 python-multipart==0.0.32
 pydantic==2.11.10
 httpx==0.28.1
+utils3d @ https://github.com/LDYang694/Storages/releases/download/20260430/utils3d-0.0.2-py3-none-any.whl
+hf-xet==1.2.0

@@ -22,6 +22,18 @@ native extensions. Advanced users can run `01_INSTALL.bat` and
 
 ## Troubleshooting
 
+New one-click installations include Pixal3D. To add it to an older setup,
+close running generation jobs and run
+`INSTALL_PIXAL3D.bat`. It installs the pinned NAF source and NATTEN wheel,
+MoGe support, and the additional models. Then refresh the studio.
+
+On a 12 GB GPU, use 1024 shape resolution. The app now rejects 1536/2048
+before starting on this hardware. A saved high-resolution checkpoint remains
+available but needs hardware that meets the app's memory limit to resume.
+The library's Resume buttons keep completed stages and repeat only incomplete
+ones with their original settings. A Windows driver crash needs separate
+driver/system diagnosis; reducing memory pressure cannot guarantee a fix.
+
 | Symptom | What to do |
 |---|---|
 | Missing textures | Keep texture generation enabled and open textured.glb or game_ready.glb. final.glb and STL are untextured. |

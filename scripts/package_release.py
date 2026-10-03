@@ -4,6 +4,7 @@ import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
 FILES=["app.py","library.py","mesh_runner.py","native_runtime.py","native_models.py",
+       "pixal_native.py","resource_guard.py","INSTALL_PIXAL3D.bat",
        "prepare_runtime.py","setup.py","download_models.py","doctor.py","render_preview.py",
        "requirements.txt","sources.lock.json","model-revisions.json","README.md","LICENSE",
        "THIRD_PARTY_NOTICES.md",".gitignore","INSTALL.bat","START.bat",

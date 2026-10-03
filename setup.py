@@ -34,14 +34,17 @@ def main():
             raise RuntimeError(f"{dest} contains edits. Preserve them before rerunning setup.")
         run("git", "-C", dest, "fetch", "--depth", "1", "origin", spec["revision"])
         if name == "Trellis-Windows":
-            run("git", "-C", dest, "sparse-checkout", "set", "trellis2", "wheels/Windows/Torch280")
+            run("git", "-C", dest, "sparse-checkout", "set", "trellis2", "moge", "wheels/Windows/Torch280")
         run("git", "-C", dest, "checkout", "--detach", spec["revision"])
     wheels = ROOT / "sources/Trellis-Windows/wheels/Windows/Torch280"
-    for name in ("cumesh", "flex_gemm", "nvdiffrast", "nvdiffrec_render", "o_voxel"):
-        wheel = next(wheels.glob(f"{name}-*-cp312-cp312-win_amd64.whl"))
-        run(*pip, "--no-deps", wheel)
-    # The default WTiVo binary targets Blackwell. Older cards need its alternate archive.
     cc = int(subprocess.check_output([str(py), "-c", "import torch; print(torch.cuda.get_device_capability(0)[0])"], text=True).strip())
+    for name in ("cumesh", "flex_gemm", "natten", "nvdiffrast", "nvdiffrec_render", "o_voxel"):
+        wheel_dir = wheels / "Blackwell" if name == "natten" and cc >= 12 else wheels
+        wheel = next(wheel_dir.glob(f"{name}-*-cp312-cp312-win_amd64.whl"))
+        # The two NATTEN builds have the same version but different CUDA targets.
+        reinstall = ["--reinstall" if uv else "--force-reinstall"] if name == "natten" else []
+        run(*pip, "--no-deps", *reinstall, wheel)
+    # The default WTiVo binary targets Blackwell. Older cards need its alternate archive.
     if cc < 12:
         archive = ROOT / "sources/WTiVo/build/ForNonBlackwellgpu(rtx50 and below).rar"
         run("tar", "-xf", archive, "-C", ROOT / "sources/WTiVo")

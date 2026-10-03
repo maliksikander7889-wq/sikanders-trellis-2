@@ -21,7 +21,7 @@ Orange and black. Runs on your NVIDIA GPU. No cloud inference subscription.
 
 The installer checks your GPU, installs missing Git, Blender, Microsoft C++
 runtime and Python tooling, builds an isolated environment, downloads the
-models, and opens the app. Windows may show installation permission prompts.
+models for both engines, and opens the app. Windows may show installation permission prompts.
 The first setup includes a large download; interrupted model downloads resume.
 
 After setup, double-click **START.bat**. The studio opens at
@@ -34,12 +34,14 @@ After setup, double-click **START.bat**. The studio opens at
 | OS | Windows 10/11, x64 |
 | GPU | NVIDIA CUDA GPU; tested on RTX 5070 Ti Laptop, 12 GB VRAM |
 | RAM | 32 GB; close other memory-heavy applications |
-| Disk | At least 35 GB free for setup, plus space for outputs |
+| Disk | At least 60 GB free for both engines, plus space for outputs |
 | Driver | Current NVIDIA driver compatible with CUDA 12.8 |
 | Internet | Required for first installation and model downloads |
 
-1024 generation is tested. 1536 and 2048 are available but need more memory
-and are not verified on the test laptop. Other GPU generations require
+1024 is the supported setting on the 12 GB test laptop. The app permits 1536
+on GPUs with at least 16 GB class memory and experimental 2048 on GPUs with
+at least 24 GB class memory. These checks do not guarantee every object fits.
+Other GPU generations require
 compatible upstream binaries and have not been tested by this project.
 
 ## What you can do
@@ -51,6 +53,40 @@ compatible upstream binaries and have not been tested by this project.
 - **Your library:** reopen saved work, switch model versions, see topology
   results and download assets. No database or separate account required.
 - **Bundled example:** explore the wolf rune axe before your first generation.
+
+## Add Pixal3D
+
+New installations include both engines. To upgrade an existing installation,
+double-click **INSTALL_PIXAL3D.bat** once. This
+installs the extra dependencies and downloads Pixal3D shape models, MoGe
+camera estimation and NAF feature upsampling. Allow roughly 25 GB of extra
+space for models, code and download caches. Refresh the studio afterward.
+
+Choose **Pixal3D shape + TRELLIS.2 textures** under **Generation engine**.
+Pixal3D generates the shape; TRELLIS.2 adds materials to the same shape latent.
+Both checkpoints use the same shape decoder and latent normalization.
+Texturing does not refine the geometry. Turn textures off for shape only.
+Pixal3D supports 1024 and 1536; the GPU memory limit also applies.
+Multiview generation and quantized Pixal3D models are not included.
+
+![Pixal3D axe with TRELLIS.2 materials in the studio](docs/pixal3d-studio.png)
+
+The hybrid axe test completed with a 29,278-triangle baked model and embedded
+materials. See [validation results and limits](docs/VALIDATION.md).
+
+## Recover an interrupted run
+
+The app saves sampling checkpoints and completed stages. Open **Your library**
+and select **Resume** on an interrupted run to continue with its original
+settings. Completed stages are skipped; an incomplete stage is repeated.
+A run above the current GPU memory limit remains saved but cannot resume on
+that GPU. Start a separate 1024 run instead; the app never silently lowers
+resolution or replaces the original checkpoint.
+
+Generation, material sampling and mesh decoding use separate workers to
+release memory between stages. A watchdog stops those workers when Windows
+memory is critically low. Keep other memory-heavy applications closed during
+large jobs. Hardware limits cannot prevent every driver or system failure.
 
 ## The axe example
 

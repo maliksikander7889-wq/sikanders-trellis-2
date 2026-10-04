@@ -4,12 +4,11 @@ import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
 FILES=["app.py","library.py","mesh_runner.py","native_runtime.py","native_models.py",
-       "pixal_native.py","resource_guard.py","INSTALL_PIXAL3D.bat",
+       "pixal_native.py","resource_guard.py","Run.exe",
        "prepare_runtime.py","setup.py","download_models.py","doctor.py","render_preview.py",
        "requirements.txt","sources.lock.json","model-revisions.json","README.md","LICENSE",
-       "THIRD_PARTY_NOTICES.md",".gitignore","INSTALL.bat","START.bat",
-       "01_INSTALL.bat","02_DOWNLOAD_MODELS.bat","03_START.bat","04_CHECK.bat",".github/FUNDING.yml"]
-FOLDERS=["web","docs","examples/axe","scripts","tests"]
+       "THIRD_PARTY_NOTICES.md",".gitignore",".github/FUNDING.yml"]
+FOLDERS=["web","docs","examples/axe","scripts","tests","launcher"]
 
 def release_files():
     files=[ROOT/name for name in FILES]

@@ -52,7 +52,7 @@ class ApiTests(unittest.TestCase):
     def test_pixal_requires_downloads(self):
         response=self.client.post('/api/jobs',data={'engine':'pixal3d'},files={'file':('test.png',b'bad','image/png')})
         self.assertEqual(response.status_code,422)
-        self.assertIn('INSTALL_PIXAL3D.bat',response.json()['detail'])
+        self.assertIn('Run.exe → Setup & download',response.json()['detail'])
         self.assertIsNone(app.active_id)
 
     def test_invalid_engine(self):

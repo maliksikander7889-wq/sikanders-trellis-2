@@ -2,7 +2,7 @@
 
 ## First installation
 
-Extract the complete repository, then run `INSTALL.bat`. Do not run it from
+Extract the complete repository, then run `Run.exe → Setup & download`. Do not run it from
 inside a ZIP viewer. Use a writable folder outside Program Files or OneDrive.
 
 The bootstrap uses Windows App Installer (`winget`) for missing Git, Blender
@@ -14,17 +14,24 @@ and texture models. It does not modify an existing Python environment.
 
 Prerequisite installers may ask Windows for permission. A current NVIDIA
 driver must already be installed. If winget is missing, install Microsoft's
-App Installer from Microsoft Store and run INSTALL.bat again.
+App Installer from Microsoft Store and run Run.exe → Setup & download again.
 
-`START.bat` starts the studio after setup. `04_CHECK.bat` checks the GPU and
-native extensions. Advanced users can run `01_INSTALL.bat` and
-`02_DOWNLOAD_MODELS.bat` separately when Python 3.12 and prerequisites exist.
+In `Run.exe`, **Launch studio** opens the website, **Download models** retries
+model downloads, and **Check** checks GPU extensions. Progress appears inside
+the launcher. **Stop studio** stops an idle server; finish or cancel any active
+generation first. Closing the launcher leaves the studio running. During
+setup or downloads, closing minimizes the launcher until the operation ends.
+
+Keep `Run.exe` beside the application files; it is not a portable copy of the
+entire model installation. The launcher uses Windows .NET Framework and needs
+no Python installation to open. Its source and build script are in `launcher/`.
+The executable is currently unsigned.
 
 ## Troubleshooting
 
 New one-click installations include Pixal3D. To add it to an older setup,
 close running generation jobs and run
-`INSTALL_PIXAL3D.bat`. It installs the pinned NAF source and NATTEN wheel,
+`Run.exe → Setup & download`. It installs the pinned NAF source and NATTEN wheel,
 MoGe support, and the additional models. Then refresh the studio.
 
 On a 12 GB GPU, use 1024 shape resolution. The app now rejects 1536/2048
@@ -38,10 +45,10 @@ driver/system diagnosis; reducing memory pressure cannot guarantee a fix.
 |---|---|
 | Missing textures | Keep texture generation enabled and open textured.glb or game_ready.glb. final.glb and STL are untextured. |
 | Out of memory / paging-file error | Close memory-heavy applications; use 1024 resolution. Available system memory matters as well as VRAM. |
-| Download interrupted | Rerun INSTALL.bat. Completed model files are reused. |
-| Missing CUDA extension / DLL | Rerun setup, then 04_CHECK.bat. Keep Python 3.12 / PyTorch 2.8.0 / CUDA 12.8 aligned. |
+| Download interrupted | Rerun Run.exe → Setup & download. Completed model files are reused. |
+| Missing CUDA extension / DLL | Rerun setup, then Run.exe → Check. Keep Python 3.12 / PyTorch 2.8.0 / CUDA 12.8 aligned. |
 | Blender not found | Install Blender or create settings.json with `{"blender":"C:/path/to/blender.exe"}`. |
-| Port 7860 in use | Close the previous app terminal before launching another copy. |
+| Port 7860 in use | Launch reuses the running studio. Use Stop studio before setup. A different service using that port must be closed separately. |
 | Topology warning | Use the detailed version when it passes. Inspect the relevant audit; don't assume all model versions are closed. |
 | Empty foreground | Use a transparent PNG or an image with one clearly separated object. |
 | Dirty source checkout | Preserve your source edits before rerunning setup. The installer refuses to discard them. |

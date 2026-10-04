@@ -48,7 +48,7 @@ adding authentication and deployment hardening. No hosted service is included.
 
 ## Validation
 
-Run `04_CHECK.bat` for GPU checks, and
+Run `Run.exe → Check` for GPU checks, and
 `python -m unittest discover -s tests` with the installed environment for
 library checks. Test the UI with the bundled axe before starting a costly
 generation. Full generation tests require NVIDIA hardware and model downloads.
@@ -63,6 +63,12 @@ Bootstrap syntax, preflight, packaging and rerunnable Python setup were checked;
 a completely clean Windows installation has not been tested.
 
 ## Source release
+
+Build the Windows launcher with `powershell -File launcher/build.ps1`.
+It uses the Windows .NET Framework compiler and produces `Run.exe`.
+`scripts/launcher.ps1` dispatches setup, model downloads, checks and server
+start/stop. Launch waits for the local API before opening the browser.
+The source release contains one executable entry point and no batch files.
 
 `python scripts/package_release.py` produces `dist/sikanders-trellis-2.zip`
 from an explicit file allowlist. It includes the axe example and documentation,

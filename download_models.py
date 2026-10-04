@@ -72,7 +72,7 @@ def main():
         import torch
         naf_dir = ROOT / "sources/NAF"
         if not (naf_dir / "hubconf.py").exists():
-            raise RuntimeError("Pixal3D runtime missing. Run INSTALL.bat to update setup first.")
+            raise RuntimeError("Pixal3D runtime missing. Run Run.exe → Setup & download to update setup first.")
         torch.hub.load(str(naf_dir), "naf", pretrained=True, device="cpu", source="local")
         (ROOT / "models/pixal3d-ready.json").write_text(json.dumps({"revisions": lock}, indent=2))
     print("Native model downloads finished.")

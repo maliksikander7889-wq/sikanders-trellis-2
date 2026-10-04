@@ -50,7 +50,7 @@ def main():
         run("tar", "-xf", archive, "-C", ROOT / "sources/WTiVo")
     run(py, ROOT / "prepare_runtime.py")
     run(py, ROOT / "doctor.py")
-    print("Setup finished. Run 02_DOWNLOAD_MODELS.bat, then 03_START.bat.")
+    print("Setup finished. Run Run.exe → Download models, then Run.exe → Launch studio.")
 
 
 if __name__ == "__main__":

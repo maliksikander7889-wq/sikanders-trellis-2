@@ -9,17 +9,17 @@ function Refresh-Path {
 }
 function Install-Package([string]$Id) {
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        throw "Windows App Installer (winget) is missing. Install App Installer from Microsoft Store, then rerun INSTALL.bat. Needed package: $Id"
+        throw "Windows App Installer (winget) is missing. Install App Installer from Microsoft Store, then rerun Run.exe â†’ Setup & download. Needed package: $Id"
     }
     & winget install --exact --id $Id --source winget --accept-package-agreements --accept-source-agreements --disable-interactivity
-    if ($LASTEXITCODE -ne 0) { throw "Installation of $Id failed ($LASTEXITCODE). Install it manually, then rerun INSTALL.bat." }
+    if ($LASTEXITCODE -ne 0) { throw "Installation of $Id failed ($LASTEXITCODE). Install it manually, then rerun Run.exe â†’ Setup & download." }
     Refresh-Path
 }
 try {
     Write-Host "`nSIKANDER'S TRELLIS 2 - ONE-CLICK SETUP`n" -ForegroundColor DarkYellow
     if (-not [Environment]::Is64BitOperatingSystem -or $env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { throw 'Windows x64 is required.' }
     $gpu = Get-Command nvidia-smi -ErrorAction SilentlyContinue
-    if (-not $gpu) { throw 'Install a current NVIDIA graphics driver, restart Windows, and rerun INSTALL.bat.' }
+    if (-not $gpu) { throw 'Install a current NVIDIA graphics driver, restart Windows, and rerun Run.exe â†’ Setup & download.' }
     & nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
     if ($LASTEXITCODE -ne 0) { throw 'The NVIDIA driver is not responding.' }
     Write-Host 'First install needs at least 60 GB of free space for both engines and a large model download. 32 GB RAM and 12 GB VRAM are recommended for 1024.'
@@ -50,8 +50,8 @@ try {
     & $pythonPath setup.py
     if ($LASTEXITCODE -ne 0) { throw 'Environment setup failed. See the error above.' }
     & '.\.venv\Scripts\python.exe' download_models.py --textures --pixal3d
-    if ($LASTEXITCODE -ne 0) { throw 'Model download failed. Rerun INSTALL.bat to resume.' }
-    Write-Host "`nReady. Opening Sikander's Trellis 2." -ForegroundColor Green
+    if ($LASTEXITCODE -ne 0) { throw 'Model download failed. Rerun Run.exe â†’ Setup & download to resume.' }
+    Write-Host "`nReady. Choose Launch studio in Run.exe." -ForegroundColor Green
 } catch {
     Write-Host $_.Exception.Message -ForegroundColor Red
     exit 1

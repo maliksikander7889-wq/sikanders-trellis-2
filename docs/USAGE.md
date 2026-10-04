@@ -2,7 +2,7 @@
 
 ## Pixal3D and saved stages
 
-Run `INSTALL_PIXAL3D.bat` once. In the studio select **Pixal3D shape +
+Run `Run.exe → Setup & download` once. In the studio select **Pixal3D shape +
 TRELLIS.2 textures**. With texturing disabled, only Pixal3D geometry is produced.
 The command line accepts `--engine pixal3d` with 1024 or 1536 resolution.
 

@@ -159,7 +159,7 @@ async def create_job(file:UploadFile=File(...),name:str=Form("Untitled creation"
     try: validate_hardware(resolution,engine)
     except ValueError as exc: raise HTTPException(422,str(exc))
     if engine == "pixal3d" and not (ROOT/"models/pixal3d-ready.json").is_file():
-        raise HTTPException(422,"Pixal3D needs its additional models. Run INSTALL_PIXAL3D.bat once, then refresh this page.")
+        raise HTTPException(422,"Pixal3D needs its additional models. Run Run.exe → Setup & download once, then refresh this page.")
     suffix=Path(file.filename or "").suffix.lower()
     allowed=(".png",".jpg",".jpeg",".webp") if task=="image" else (".glb",".ply",".stl",".obj")
     if suffix not in allowed: raise HTTPException(422,"Unsupported input file")

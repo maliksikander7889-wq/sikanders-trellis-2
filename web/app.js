@@ -45,7 +45,7 @@ function updateEngine(){
  for(const option of $('resolution').options)option.disabled=Number(option.value)>limit;
  if(Number($('resolution').value)>limit)$('resolution').value='1024';
  $('engine-label').textContent=pixal?'PIXAL3D + TRELLIS.2':'TRELLIS.2';
- $('engine-help').textContent=pixal?(hardware.pixal3d_ready?'Pixal3D builds the shape; TRELLIS.2 adds materials when textures are enabled.':'Run INSTALL_PIXAL3D.bat once to download the additional models, then refresh.'):'TRELLIS.2 generates both shape and materials.';
+ $('engine-help').textContent=pixal?(hardware.pixal3d_ready?'Pixal3D builds the shape; TRELLIS.2 adds materials when textures are enabled.':'Run Run.exe → Setup & download once to download the additional models, then refresh.'):'TRELLIS.2 generates both shape and materials.';
  $('memory-note').textContent=`Up to ${limit} shape resolution on this GPU. Each stage saves progress. Other open apps also use memory.`;
 }
 $('engine').addEventListener('change',updateEngine);

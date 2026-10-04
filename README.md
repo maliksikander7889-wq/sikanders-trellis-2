@@ -17,15 +17,17 @@ Orange and black. Runs on your NVIDIA GPU. No cloud inference subscription.
 
 1. Download this repository with **Code → Download ZIP**, or clone it.
 2. Extract it to a writable folder, such as `D:\SikandersTrellis2`.
-3. Double-click **INSTALL.bat**.
+3. Double-click **Run.exe → Setup & download**.
 
 The installer checks your GPU, installs missing Git, Blender, Microsoft C++
 runtime and Python tooling, builds an isolated environment, downloads the
-models for both engines, and opens the app. Windows may show installation permission prompts.
+models for both engines. Choose **Launch studio** when it finishes.
+Windows may show installation permission prompts.
 The first setup includes a large download; interrupted model downloads resume.
 
-After setup, double-click **START.bat**. The studio opens at
-<http://127.0.0.1:7860>. Keep its terminal window open while using the app.
+After setup, double-click **Run.exe → Launch studio**. The studio opens at
+<http://127.0.0.1:7860>. The server runs in the background; closing the launcher leaves it running.
+Use **Stop studio** in the launcher before running setup again.
 
 ### Hardware
 
@@ -57,7 +59,7 @@ compatible upstream binaries and have not been tested by this project.
 ## Add Pixal3D
 
 New installations include both engines. To upgrade an existing installation,
-double-click **INSTALL_PIXAL3D.bat** once. This
+double-click **Run.exe → Setup & download** once. This
 installs the extra dependencies and downloads Pixal3D shape models, MoGe
 camera estimation and NAF feature upsampling. Allow roughly 25 GB of extra
 space for models, code and download caches. Refresh the studio afterward.
